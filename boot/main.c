@@ -32,8 +32,8 @@
 #define SECTSIZE	512
 #define ELFHDR		((struct Elf *) 0x10000) // scratch space
 
-void readsect(void*, uint32_t);
-void readseg(uint32_t, uint32_t, uint32_t);
+static void readsect(void*, uint32_t);
+static void readseg(uint32_t, uint32_t, uint32_t);
 
 void
 bootmain(void)
@@ -67,7 +67,7 @@ bad:
 // Read 'count' bytes at 'offset' from kernel into virtual address 'va'.
 // Might copy more than asked
 void
-readseg(uint32_t va, uint32_t count, uint32_t offset)
+static readseg(uint32_t va, uint32_t count, uint32_t offset)
 {
 	uint32_t end_va;
 
@@ -91,7 +91,7 @@ readseg(uint32_t va, uint32_t count, uint32_t offset)
 }
 
 void
-waitdisk(void)
+static waitdisk(void)
 {
 	// wait for disk reaady
 	while ((inb(0x1F7) & 0xC0) != 0x40)
@@ -99,7 +99,7 @@ waitdisk(void)
 }
 
 void
-readsect(void *dst, uint32_t offset)
+static readsect(void *dst, uint32_t offset)
 {
 	// wait for disk to be ready
 	waitdisk();

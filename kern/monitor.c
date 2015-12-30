@@ -59,6 +59,27 @@ int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
 	// Your code here.
+	uint32_t eip = read_eip();
+	uint32_t ebp = read_ebp();
+	uint32_t pre_ebp, pre_eip, tmp_arg;
+	uint32_t *pebp;
+	int i;
+	while(ebp)
+	{
+		pebp = (uint32_t *)(ebp);
+		pre_ebp = *pebp;
+		pre_eip = *(pebp + 1);
+		cprintf("ebp %08x  eip %08x  ", ebp, eip);
+		cprintf("args ");
+		for(i = 0; i < 4; i++)
+		{
+			tmp_arg = *(pebp + 2 + i);
+			cprintf("%08x ", tmp_arg);
+		}
+		cprintf("\n");
+		ebp = pre_ebp;
+		eip = pre_eip;
+	}
 	return 0;
 }
 
@@ -128,6 +149,7 @@ monitor(struct Trapframe *tf)
 // return EIP of caller.
 // does not work if inlined.
 // putting at the end of the file seems to prevent inlining.
+unsigned read_eip() __attribute__((noinline));
 unsigned
 read_eip()
 {
