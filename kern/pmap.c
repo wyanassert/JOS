@@ -607,6 +607,7 @@ page_insert(pde_t *pgdir, struct Page *pp, void *va, int perm)
 			page_remove(pgdir, va);
 		}
 		*pte = page2pa(pp) | PTE_P | perm;
+		tlb_invalidate(pgdir, va);
 		return 0;
 	}
 	return 0;
