@@ -753,7 +753,28 @@ int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
 	// LAB 3: Your code here. 
+	int i;
+	unsigned int begin;
+	begin = (unsigned int)va / PGSIZE * PGSIZE + PGSIZE;
+	if(((unsigned int) *pgdir_walk(env->env_pgdir, va, 0) & (perm | PTE_P)) == (perm | PTE_P)){
+		for( ; begin < ((unsigned int)va + len) / PGSIZE * PGSIZE; begin += PGSIZE){
+			if(((unsigned int)pgdir_walk(env->env_pgdir, (void *)begin, 0) && (perm | PTE_P)) == (perm | PTE_P)){
 
+			}
+			else{
+				user_mem_check_addr = begin;
+				cprintf("fuck2!\n");
+				return -E_FAULT;
+			}
+		}
+	}
+	else{
+		user_mem_check_addr = (unsigned int)va;
+		cprintf("%x\n", *pgdir_walk(env->env_pgdir, va, 0));
+		cprintf("%x\n", PTE_P|PTE_U);
+		cprintf("fuck1!\n");
+		return -E_FAULT;
+	}
 	return 0;
 }
 

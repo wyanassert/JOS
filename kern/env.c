@@ -296,7 +296,6 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 			cprintf("segment_alloc success!\n");
 
 			memmove((void *)ph->p_va, (void *)((unsigned int)env_elf + ph->p_offset), ph->p_filesz);
-
 		}
 		ph++;
 	}
