@@ -3,5 +3,15 @@ Physical memory: 32768K available, base = 640K, extended = 31744K
 check_page_alloc() succeeded!
 page_check() succeeded!
 check_boot_pgdir() succeeded!
+env_create start!
+[00000000] new env 00001000
+env_alloc success!
+segment_alloc success!
+segment_alloc success!
+segment_alloc success!
+for success!!
+env_elf 800020
+env_creat end
+kernel panic at kern/env.c:456: env_run not yet implemented
 Welcome to the JOS kernel monitor!
 Type 'help' for a list of commands.
