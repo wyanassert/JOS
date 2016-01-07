@@ -11,6 +11,7 @@
 #include <kern/pmap.h>
 #include <kern/trap.h>
 #include <kern/monitor.h>
+#include <kern/sched.h>
 
 struct Env *envs = NULL;		// All environments
 struct Env *curenv = NULL;	        // The current env
@@ -182,6 +183,15 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	e->env_tf.tf_cs = GD_UT | 3;
 	// You will set e->env_tf.tf_eip later.
 
+	// Enable interrupts while in user mode.
+	// LAB 4: Your code here.
+
+	// Clear the page fault handler until user installs one.
+	e->env_pgfault_upcall = 0;
+
+	// Also clear the IPC receiving flag.
+	e->env_ipc_recving = 0;
+
 	// commit the allocation
 	LIST_REMOVE(e, env_link);
 	*newenv_store = e;
@@ -309,7 +319,7 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 	// LAB 3: Your code here.
 	i = page_alloc(&pg);
 	if(i != 0){
-		cprintf(";oad_icode page_alloc fail!\n");
+		cprintf("load_icode page_alloc fail!\n");
 		return;
 	}
 	page_insert(e->env_pgdir, pg, (void *)(USTACKTOP - PGSIZE), PTE_U|PTE_W);
@@ -405,9 +415,10 @@ env_destroy(struct Env *e)
 {
 	env_free(e);
 
-	cprintf("Destroyed the only environment - nothing more to do!\n");
-	while (1)
-		monitor(NULL);
+	if (curenv == e) {
+		curenv = NULL;
+		sched_yield();
+	}
 }
 
 

@@ -7,6 +7,7 @@
 #include <inc/assert.h>
 
 #include <kern/console.h>
+#include <kern/picirq.h>
 
 
 void cons_intr(int (*proc)(void));
@@ -354,6 +355,9 @@ kbd_intr(void)
 void
 kbd_init(void)
 {
+	// Drain the kbd buffer so that Bochs generates interrupts.
+	kbd_intr();
+	irq_setmask_8259A(irq_mask_8259A & ~(1<<1));
 }
 
 
