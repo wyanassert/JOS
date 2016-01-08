@@ -288,41 +288,35 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 
 	// LAB 3: Your code here.
 	struct Elf *env_elf;
-	struct Proghdr *ph;
+	struct Proghdr *ph, *eph;
 	struct Page *pg;
 	int i;
 	unsigned int old_cr3;
 	env_elf = (struct Elf *)binary;
 	old_cr3 = rcr3();
 	lcr3(PADDR(e->env_pgdir));
-	if(env_elf->e_magic != ELF_MAGIC){
-		return ;
+	if (env_elf->e_magic != ELF_MAGIC){
+  		panic("load_icode : not an valid ELF.\n");
 	}
-	ph = (struct Proghdr *)((unsigned int)env_elf + env_elf->e_phoff);
-	for(i = 0; i < env_elf->e_phnum; i++){
-		if(ph->p_type == ELF_PROG_LOAD){
-			segment_alloc(e, (void *)ph->p_va, ph->p_memsz);
-			memset((void *)ph->p_va, 0, ph->p_memsz - ph->p_filesz);
-			cprintf("segment_alloc success!\n");
-
-			memmove((void *)ph->p_va, (void *)((unsigned int)env_elf + ph->p_offset), ph->p_filesz);
+	ph = (struct Proghdr *)(binary + env_elf->e_phoff);
+	eph = ph + env_elf->e_phnum;
+	for ( ;ph < eph; ph++) {
+		if(ph->p_type != ELF_PROG_LOAD){
+			continue;
 		}
-		ph++;
+		segment_alloc(e, (void *)ph->p_va, ph->p_memsz);
+		memset((void *)ROUNDDOWN((uintptr_t)ph->p_va, PGSIZE), 0, ROUNDUP(ph->p_memsz, PGSIZE));
+		memmove((void *)ph->p_va, binary + ph->p_offset, ph->p_filesz);
 	}
-	cprintf("for success!!\n");
+	//cprintf("for success!!\n");
 	e->env_tf.tf_eip = env_elf->e_entry;
-	cprintf("env_elf %x\n", env_elf->e_entry);
+	//cprintf("env_elf %x\n", env_elf->e_entry);
 
 	// Now map one page for the program's initial stack
 	// at virtual address USTACKTOP - PGSIZE.
 
-	// LAB 3: Your code here.
-	i = page_alloc(&pg);
-	if(i != 0){
-		cprintf("load_icode page_alloc fail!\n");
-		return;
-	}
-	page_insert(e->env_pgdir, pg, (void *)(USTACKTOP - PGSIZE), PTE_U|PTE_W);
+	// LAB 3:   .
+	segment_alloc(e, (void *)(USTACKTOP-PGSIZE), PGSIZE);
 	lcr3(old_cr3);
 }
 

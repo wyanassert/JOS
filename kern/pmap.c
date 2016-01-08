@@ -753,28 +753,26 @@ int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
 	// LAB 3: Your code here. 
-	int i;
-	unsigned int begin;
-	begin = (unsigned int)va / PGSIZE * PGSIZE + PGSIZE;
-	if(((unsigned int) *pgdir_walk(env->env_pgdir, va, 0) & (perm | PTE_P)) == (perm | PTE_P)){
-		for( ; begin < ((unsigned int)va + len) / PGSIZE * PGSIZE; begin += PGSIZE){
-			if(((unsigned int)pgdir_walk(env->env_pgdir, (void *)begin, 0) && (perm | PTE_P)) == (perm | PTE_P)){
+	pde_t *pgdir = env->env_pgdir;
+	pte_t *pgtable;
+	const void *current;
 
-			}
-			else{
-				user_mem_check_addr = begin;
-				cprintf("fuck2!\n");
-				return -E_FAULT;
-			}
-		}
-	}
-	else{
-		user_mem_check_addr = (unsigned int)va;
-		cprintf("%x\n", *pgdir_walk(env->env_pgdir, va, 0));
-		cprintf("%x\n", PTE_P|PTE_U);
-		cprintf("fuck1!\n");
+	// above ULIM, fault
+	if((uint32_t)(va + len) >= ULIM){
+		user_mem_check_addr = (uintptr_t)(va + len);
 		return -E_FAULT;
 	}
+
+	// check for permission
+	// checkpoints: va, all pages covering va+PGSIZE and va+len
+	perm |= PTE_P;
+	for (current = va; current < ROUNDUP(va+len, PGSIZE); current = ROUNDDOWN(current + PGSIZE, PGSIZE)) {
+		if(!page_lookup(pgdir, (void *)current, &pgtable) ||(*pgtable & perm) != perm){
+			user_mem_check_addr = (uintptr_t) current;
+			return -E_FAULT;
+		}
+	}
+
 	return 0;
 }
 
